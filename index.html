@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIVO TRACKER 2.0</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --card: #161616;
+            --accent: #bb86fc;
+            --green: #00ffcc;
+            --win: #ff3131; /* Цвет победы */
+            --text: #ffffff;
+        }
+
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
+        .container { width: 100%; max-width: 500px; }
+        .card { background: var(--card); border: 1px solid rgba(187, 134, 252, 0.2); border-radius: 15px; padding: 15px; margin-bottom: 15px; }
+        
+        .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .price-val { font-weight: bold; color: var(--green); }
+        
+        /* Прогресс */
+        .progress-box { background: #222; height: 20px; border-radius: 10px; overflow: hidden; margin: 10px 0; border: 1px solid #333; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #6200ee, var(--accent)); width: 0%; transition: 0.5s; }
+
+        /* Кнопки */
+        button { background: rgba(187, 134, 252, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+
+        /* Календарь */
+        .month-name { color: var(--accent); font-weight: bold; margin: 15px 0 5px; font-size: 14px; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .day { 
+            aspect-ratio: 1; background: #1a1a1a; border-radius: 4px; display: flex; 
+            align-items: center; justify-content: center; font-size: 10px; cursor: pointer; 
+            border: 1px solid #222; position: relative; color: #444;
+        }
+        .day.checked { color: var(--accent); border-color: var(--accent); }
+        .day.checked::after { content: '✕'; position: absolute; font-size: 14px; font-weight: bold; }
+        
+        /* Стиль победы */
+        .day.winner.checked { color: var(--win); border-color: var(--win); text-shadow: 0 0 8px var(--win); }
+        .day.winner.checked::after { color: var(--win); }
+
+        h1 { font-size: 20px; text-align: center; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>VIVO X300 TRACKER</h1>
+
+    <div class="card">
+        <div class="stat-row">
+            <span>💰 БАЛАНС:</span>
+            <span class="price-val" id="bal-text">0 ₽</span>
+            <button onclick="edit('bal')">Изм.</button>
+        </div>
+        <div class="progress-box"><div class="progress-fill" id="bar"></div></div>
+        <div style="text-align: center; font-size: 12px;">ПРОГРЕСС: <span id="perc-text">0</span>%</div>
+    </div>
+
+    <div class="card">
+        <div class="stat-row"><span>📱 VIVO:</span> <span id="vivo-text">0 ₽</span> <button onclick="edit('vivo')">Изм.</button></div>
+        <div style="text-align: center; color: var(--accent); font-size: 14px; margin-top: 10px;">ОСТАЛОСЬ: <span id="rem-text">0</span> ₽</div>
+    </div>
+
+    <!-- ГРАФИК ПОСТУПЛЕНИЙ -->
+<div class="card" style="border-color: rgba(0, 255, 204, 0.2);">
+    <div style="text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 10px; color: var(--green);">📈 ПЛАН ПРИХОДА</div>
+    
+    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+        <span style="opacity: 0.7;">17.04 (Пт) — Стипуха:</span>
+        <span style="color: var(--green); font-weight: bold;">+8 000 ₽</span>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+        <span style="opacity: 0.7;">24.04 (Пт) — Стипуха:</span>
+        <span style="color: var(--green); font-weight: bold;">+1 150 ₽</span>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+        <span style="opacity: 0.7;">17.05 (Вс) — Стипуха:</span>
+        <span style="color: var(--green); font-weight: bold;">+8 000 ₽</span>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+        <span style="opacity: 0.7;">25.05 (Пн) — Стипуха:</span>
+        <span style="color: var(--green); font-weight: bold;">+1 150 ₽</span>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; font-size: 12px;">
+        <span style="opacity: 0.7;">17.06 (Ср) — Стипуха:</span>
+        <span style="color: var(--green); font-weight: bold;">+8 000 ₽</span>
+    </div>
+    
+    <div style="font-size: 9px; opacity: 0.4; margin-top: 10px; text-align: center;">
+        Итого:
+        <span style="color: var(--green); font-weight: bold;">+26 300 ₽</span>
+    </div>
+</div>
+
+
+    <div class="card">
+        <div style="text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 10px;">КАЛЕНДАРЬ МАРАФОНА</div>
+        <div id="cal-box"></div>
+    </div>
+</div>
+
+<script>
+    // Сохранение данных
+    let store = JSON.parse(localStorage.getItem('vivo_db')) || {
+        bal: 11462, vivo: 46401, marks: []
+    };
+
+    function update() {
+        localStorage.setItem('vivo_db', JSON.stringify(store));
+        draw();
+    }
+
+    function edit(key) {
+        let val = prompt("Введи сумму:", store[key]);
+        if(val) { store[key] = parseInt(val); update(); }
+    }
+
+    function toggle(id) {
+        let i = store.marks.indexOf(id);
+        if(i > -1) store.marks.splice(i, 1);
+        else store.marks.push(id);
+        update();
+    }
+
+    function draw() {
+        // Цифры
+        document.getElementById('bal-text').innerText = store.bal.toLocaleString() + ' ₽';
+        document.getElementById('vivo-text').innerText = store.vivo.toLocaleString() + ' ₽';
+        let rem = store.vivo - store.bal;
+        document.getElementById('rem-text').innerText = (rem > 0 ? rem : 0).toLocaleString();
+        
+        let p = Math.floor((store.bal / store.vivo) * 100);
+        document.getElementById('bar').style.width = Math.min(p, 100) + '%';
+        document.getElementById('perc-text').innerText = p;
+
+        // Календарь
+        const box = document.getElementById('cal-box');
+        box.innerHTML = '';
+        const months = [
+            {n: 'Апрель', d: 30}, {n: 'Май', d: 31}, {n: 'Июнь', d: 17}
+        ];
+
+        months.forEach(m => {
+            let div = document.createElement('div');
+            div.className = 'month-name';
+            div.innerText = m.n;
+            box.appendChild(div);
+
+            let grid = document.createElement('div');
+            grid.className = 'grid';
+            for(let i=1; i<=m.d; i++) {
+                let id = m.n + i;
+                let dDiv = document.createElement('div');
+                dDiv.className = 'day';
+                if(store.marks.includes(id)) dDiv.classList.add('checked');
+                if(p >= 100) dDiv.classList.add('winner'); // Красный если 100%
+                dDiv.innerText = i;
+                dDiv.onclick = () => toggle(id);
+                grid.appendChild(dDiv);
+            }
+            box.appendChild(grid);
+        });
+    }
+
+    draw();
+</script>
+
+</body>
+</html>
